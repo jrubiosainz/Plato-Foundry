@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "about": "Plataformas 3D · reparto inicial. Cada id tiene un modelo procedural de respaldo (app/platform/pf-models.js) que se usa al instante; si «file» apunta a un GLB (ruta relativa a esta carpeta), se descarga en segundo plano y lo sustituye. «height» es la altura en el juego (metros). Con «sourceHeight» (GLB con esqueleto, pies en y = 0, mirando a +Z) se escala por height / sourceHeight; sin él, se mide la caja del modelo, se centra y se apoya en y = 0. «rotateY» (radianes) corrige la orientación. «animations» relaciona cada estado del juego con un clip del GLB (fundido de 0,15–0,18 s); «clipFrom» empieza un clip en ese segundo; «walkSpeed» y «runSpeed» (m/s) ajustan la velocidad de los ciclos que van en el sitio; «glow» hace brillar la textura (lava). Si el GLB no trae animaciones, se anima por código (rebote, inclinación, estirar y encoger, giros). GLB sin compresión Draco ni meshopt, con texturas PNG o JPEG.",
+  "states": [
+    "idle",
+    "walk",
+    "run",
+    "jump",
+    "fall",
+    "climb",
+    "cheer",
+    "dance",
+    "throw",
+    "angry",
+    "wave",
+    "victory",
+    "heart",
+    "hit"
+  ],
+  "assets": {
+    "hero": {
+      "file": "models/hero.glb",
+      "height": 1.5,
+      "rotateY": 0,
+      "animations": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "run",
+        "jump": "jump",
+        "fall": "jump",
+        "climb": "walk",
+        "cheer": "celebrate",
+        "dance": "celebrate",
+        "wave": "wave",
+        "victory": "victory",
+        "hit": "hit"
+      },
+      "origin": "Magnific (proyecto «TheRubioShow · Plataformas 3D»): boceto MAI-Image-2.7 → Tripo P1 (imagen a 3D) → esqueleto y animaciones de la biblioteca de Meshy; empaquetado con tools/pack-character.mjs (textura JPEG de 1024 px). Fuente: ~/Developer/plato-assets/platform/hero/game/hero.glb",
+      "license": "Generado con la cuenta Premium de Magnific del usuario (uso comercial según los términos de Magnific); animaciones de la biblioteca de Meshy",
+      "sourceHeight": 1.7,
+      "clipFrom": {
+        "jump": 0.33,
+        "fall": 0.7
+      },
+      "walkSpeed": 2.4,
+      "runSpeed": 6.5
+    },
+    "boss": {
+      "file": "models/boss.glb",
+      "height": 3.75,
+      "rotateY": 0,
+      "animations": {
+        "idle": "idle",
+        "walk": "walk",
+        "throw": "taunt",
+        "angry": "stomp",
+        "dance": "dance",
+        "cheer": "dance",
+        "hit": "hit"
+      },
+      "origin": "Magnific (proyecto «TheRubioShow · Plataformas 3D»): boceto MAI-Image-2.7 → Tripo P1 → esqueleto y animaciones de Meshy; empaquetado con tools/pack-character.mjs. Fuente: ~/Developer/plato-assets/platform/boss/game/boss.glb",
+      "license": "Generado con la cuenta Premium de Magnific del usuario (uso comercial según los términos de Magnific); animaciones de la biblioteca de Meshy",
+      "sourceHeight": 1.78,
+      "glow": "#ff6a1a",
+      "glowIntensity": 0.55
+    },
+    "princess": {
+      "file": "models/princess.glb",
+      "height": 1.4,
+      "rotateY": 0,
+      "animations": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "walk",
+        "jump": "jump",
+        "fall": "jump",
+        "cheer": "wave",
+        "wave": "wave",
+        "dance": "jump",
+        "victory": "heart",
+        "heart": "heart"
+      },
+      "origin": "Magnific (proyecto «TheRubioShow · Plataformas 3D»): boceto MAI-Image-2.7 → Tripo P1 → esqueleto y animaciones de Meshy; empaquetado con tools/pack-character.mjs. Fuente: ~/Developer/plato-assets/platform/princess/game/princess.glb",
+      "license": "Generado con la cuenta Premium de Magnific del usuario (uso comercial según los términos de Magnific); animaciones de la biblioteca de Meshy",
+      "sourceHeight": 1.67,
+      "clipFrom": {
+        "jump": 4.4,
+        "fall": 4.6,
+        "dance": 4.4
+      },
+      "walkSpeed": 2.2
+    },
+    "enemy": {
+      "file": "models/enemy.glb",
+      "height": 0.8,
+      "rotateY": 0,
+      "animations": {
+        "idle": "idle",
+        "walk": "walk",
+        "run": "walk",
+        "angry": "stomp",
+        "hit": "hit"
+      },
+      "origin": "Magnific (proyecto «TheRubioShow · Plataformas 3D»): boceto MAI-Image-2.7 → Tripo P1 → esqueleto y animaciones de Meshy; empaquetado con tools/pack-character.mjs. Fuente: ~/Developer/plato-assets/platform/enemy/game/enemy.glb",
+      "license": "Generado con la cuenta Premium de Magnific del usuario (uso comercial según los términos de Magnific); animaciones de la biblioteca de Meshy",
+      "sourceHeight": 1.79,
+      "walkSpeed": 1.2,
+      "glow": "#ff5a14",
+      "glowIntensity": 0.45
+    },
+    "castle": {
+      "file": null,
+      "height": 52,
+      "origin": "Procedural (pf-world.js · castillo del fondo)",
+      "license": "Código del proyecto (Apache-2.0)"
+    },
+    "wall": {
+      "file": null,
+      "origin": "Procedural (pf-world.js · el muro; un GLB se ajusta a su caja de 20 × 5,5 × 2,5 m)",
+      "license": "Código del proyecto (Apache-2.0)"
+    }
+  },
+  "scale": "Escala del reparto: héroe 1,5 m; princesa algo más baja (1,4 m); enemigo a la altura de la cintura del héroe (0,8 m); jefe unas 2,5 veces el héroe (3,75 m). Los modelos de código de respaldo se escalan a la misma altura."
+}

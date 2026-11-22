@@ -1,0 +1,26 @@
+{
+  "name": "plato-foundry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plató · Plataformas 3D: un juego de plataformas en 3D que se supera hablando, con modelos de Microsoft Foundry y GitHub Copilot.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "provision": "./scripts/provision.sh",
+    "build": "node site/build.mjs",
+    "start": "node site/build.mjs && node server/server.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node tests/platform-api.mjs",
+    "e2e": "node tests/platform-e2e.mjs",
+    "check": "for f in server/*.mjs site/*.mjs site/*.js app/platform/*.js tests/*.mjs scripts/*.mjs; do node --check \"$f\" || exit 1; done"
+  },
+  "dependencies": {
+    "@microsoft/copilot-sdk": "2.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "three": "0.128.0"
+  }
+}

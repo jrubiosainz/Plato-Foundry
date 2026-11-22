@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<!-- Plató · «Plataformas 3D»: un nivel de plataformas que solo se supera hablando. Cada orden pasa por el router de
+     Plató (Microsoft-Decision-1.1 → GPT-6 Luna / GPT-6.2 Astra, y MAI-Code-2-Flash para inventar). -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plató · Plataformas 3D</title>
+<script>
+/* idioma del juego: ?lang=en|es (se recuerda en localStorage «pf.lang»); español por defecto.
+   Los textos fijos de esta página llevan su versión inglesa en data-en (texto), data-en-html, data-en-ph (placeholder),
+   data-en-title y data-en-aria (aria-label); PLATO_I18N los aplica antes de cargar el juego. */
+(function () {
+  var q = (location.search.match(/[?&]lang=(en|es)(?:&|$)/i) || [])[1], l = null;
+  try { if (q) localStorage.setItem('pf.lang', q.toLowerCase()); l = localStorage.getItem('pf.lang'); } catch (e) { l = q; }
+  var lang = (q || l || 'es').toLowerCase() === 'en' ? 'en' : 'es';
+  window.PLATO_LANG = lang; document.documentElement.lang = lang;
+  if (lang === 'en') document.title = 'Plató · 3D Platformer';
+  window.PLATO_I18N = function (root) {
+    if (window.PLATO_LANG !== 'en') return;
+    var each = function (sel, fn) { var n = (root || document).querySelectorAll(sel); for (var i = 0; i < n.length; i++) fn(n[i]); };
+    each('[data-en]', function (el) { el.textContent = el.getAttribute('data-en'); });
+    each('[data-en-html]', function (el) { el.innerHTML = el.getAttribute('data-en-html'); });
+    each('[data-en-ph]', function (el) { el.setAttribute('placeholder', el.getAttribute('data-en-ph')); });
+    each('[data-en-title]', function (el) { el.setAttribute('title', el.getAttribute('data-en-title')); });
+    each('[data-en-aria]', function (el) { el.setAttribute('aria-label', el.getAttribute('data-en-aria')); });
+  };
+})();
+</script>
+<link rel="stylesheet" href="platform/fonts.css">
+<style>
+:root {
+  --ink: #0a0d12; --ink-glass: rgba(10, 13, 18, .72); --ink-soft: rgba(10, 13, 18, .5);
+  --paper: #f2f4f7; --paper-dim: rgba(242, 244, 247, .64); --line: rgba(242, 244, 247, .16);
+  --voice: #ffd84d; --rec: #ff4b3a; --jade: #7fe3b0; --amber: #ffab4a; --heart: #ff5d73;
+  --f-display: 'Jost', 'Futura', 'Avenir Next', system-ui, sans-serif;
+  --f-ui: 'Jost', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --f-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: #8fd0ff; color: var(--paper); font: 13px/1.5 var(--f-ui); overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--voice); outline-offset: 2px; }
+kbd { font: 500 10.5px/1 var(--f-mono); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--paper-dim); background: rgba(255, 255, 255, .05); }
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#stage.drag { cursor: grabbing; }
+.glass { background: var(--ink-glass); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- cabecera ---------- */
+#top { position: fixed; left: 14px; right: 14px; top: 14px; display: flex; align-items: flex-start; gap: 10px; z-index: 7; pointer-events: none; }
+#top > * { pointer-events: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; }
+.brand .seal { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 5px; background: var(--voice); color: var(--ink); font: 900 15px/1 var(--f-display); }
+.brand b { font: 800 16px/1 var(--f-display); letter-spacing: .16em; text-transform: uppercase; }
+.brand small { color: var(--paper-dim); font: 400 11px/1 var(--f-mono); }
+#stats { margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 7px 16px; border-radius: 999px; }
+#hearts { display: flex; gap: 3px; }
+#hearts i { width: 17px; height: 15px; display: block; background: var(--heart); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M10 18 1.6 9.6A5 5 0 0 1 10 2.7a5 5 0 0 1 8.4 6.9Z'/%3E%3C/svg%3E") center/contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M10 18 1.6 9.6A5 5 0 0 1 10 2.7a5 5 0 0 1 8.4 6.9Z'/%3E%3C/svg%3E") center/contain no-repeat; transition: transform .25s, background .25s; }
+#hearts i.off { background: rgba(255, 255, 255, .2); transform: scale(.82); }
+#hearts.hit i { animation: hit .4s; } @keyframes hit { 40% { transform: scale(1.35); } }
+#gems { display: flex; align-items: center; gap: 6px; font: 500 13px/1 var(--f-mono); }
+#gems i { width: 11px; height: 13px; background: linear-gradient(160deg, #a5f3ff, #2fb8ff 55%, #1767d8); clip-path: polygon(50% 0, 100% 35%, 50% 100%, 0 35%); }
+#section { font: 500 12px/1 var(--f-ui); color: var(--paper-dim); white-space: nowrap; }
+#section b { color: var(--paper); font-weight: 600; }
+.tools { display: flex; gap: 6px; }
+.tbtn { padding: 7px 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tbtn:hover { border-color: rgba(242, 244, 247, .4); }
+.tbtn[aria-pressed="true"] { background: var(--paper); color: var(--ink); }
+.tbtn[aria-pressed="true"] kbd { color: rgba(10, 13, 18, .6); border-color: rgba(10, 13, 18, .25); }
+
+/* ---------- barra de órdenes ---------- */
+#bar { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(780px, calc(100% - 28px)); display: flex; flex-direction: column; gap: 7px; z-index: 6; }
+#say { display: flex; align-items: center; gap: 8px; padding: 7px; border-radius: 14px; }
+#mic { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); display: grid; place-items: center; flex: none; }
+#mic svg { width: 18px; height: 18px; }
+#mic.on { background: var(--rec); border-color: var(--rec); box-shadow: 0 0 0 6px rgba(255, 75, 58, .22); }
+#mic.wait { border-color: var(--amber); }
+#cmd { flex: 1; min-width: 0; background: transparent; border: 0; padding: 8px 4px; font-size: 15px; outline: none; user-select: text; -webkit-user-select: text; }
+#cmd::placeholder { color: rgba(242, 244, 247, .45); }
+#live { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); display: inline-flex; align-items: center; gap: 7px; flex: none; }
+#live .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(242, 244, 247, .35); }
+#live[aria-pressed="true"] { background: var(--paper); color: var(--ink); }
+#live[aria-pressed="true"] .dot { background: var(--rec); animation: pulse 1.1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+#chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; justify-content: center; flex-wrap: wrap; }
+#chips::-webkit-scrollbar { display: none; }
+#chips button { flex: none; padding: 5px 11px; border-radius: 999px; background: var(--ink-soft); border: 1px solid var(--line); font-size: 12.5px; white-space: nowrap; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#chips button:hover { border-color: var(--voice); }
+.hint { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; color: var(--paper-dim); font-size: 11.5px; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+
+/* ---------- frase dicha y respuesta ---------- */
+#spell { position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%); width: min(900px, calc(100% - 48px)); text-align: center; pointer-events: none; z-index: 5; }
+#spellText { margin: 0; font: 600 clamp(22px, 3vw, 36px)/1.25 var(--f-display); letter-spacing: .03em; color: var(--voice); text-shadow: 0 2px 18px rgba(0, 0, 0, .55), 0 0 2px rgba(0, 0, 0, .8); text-wrap: balance; opacity: 0; transition: opacity .3s; }
+#spellText.on { opacity: 1; } #spellText.partial { color: rgba(255, 216, 77, .7); }
+#reply { margin: 6px 0 0; font-size: 14px; color: var(--paper); min-height: 1.5em; text-shadow: 0 1px 8px rgba(0, 0, 0, .8); opacity: 0; transition: opacity .3s; }
+#reply.on { opacity: 1; }
+
+/* ---------- registro de órdenes ---------- */
+#log { position: fixed; left: 14px; bottom: 150px; width: min(330px, 40vw); display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 5; }
+.entry { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start; padding: 7px 9px; animation: rise .25s ease-out; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } }
+.entry.gone { opacity: 0; transition: opacity .6s; }
+.entry .st { width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; font: 700 11px/1 var(--f-mono); background: var(--voice); color: var(--ink); }
+.entry.run .st { animation: pulse 1s ease-in-out infinite; }
+.entry.ok .st { background: var(--jade); } .entry.fail .st { background: var(--rec); color: #fff; }
+.entry .q { color: var(--paper); font-size: 12.5px; overflow-wrap: anywhere; }
+.entry .a { color: var(--paper-dim); font-size: 11.5px; overflow-wrap: anywhere; }
+.entry .ms { font: 400 11px/1.4 var(--f-mono); color: var(--paper-dim); white-space: nowrap; }
+
+/* ---------- pista contextual ---------- */
+#tip { position: fixed; left: 50%; top: 74px; transform: translate(-50%, -8px); padding: 9px 16px; border-radius: 999px; font-size: 14px; z-index: 5; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; white-space: nowrap; }
+#tip.on { opacity: 1; transform: translate(-50%, 0); }
+#tip q { color: var(--voice); font-weight: 600; }
+
+/* ---------- bocadillos ---------- */
+#bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+.bubw { position: absolute; left: 0; top: 0; will-change: transform; }
+.bub { position: relative; width: max-content; max-width: 280px; padding: 7px 11px; border-radius: 12px; background: rgba(255, 255, 255, .95); color: #1b1f27; font: 500 13.5px/1.3 var(--f-ui); box-shadow: 0 6px 20px rgba(0, 0, 0, .25); transform-origin: 50% 100%; animation: pop .3s cubic-bezier(.16, 1, .3, 1); white-space: normal; }
+.bub b { display: block; font: 600 10px/1.3 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: #6a6f7a; }
+.bub::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: rgba(255, 255, 255, .95); }
+.bub.boss { background: #2b1d1a; color: #ffd9b8; } .bub.boss::after { border-top-color: #2b1d1a; } .bub.boss b { color: #ff9a5c; }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
+
+/* ---------- toasts ---------- */
+#toasts { position: fixed; left: 50%; top: 120px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; z-index: 8; pointer-events: none; }
+.toast { padding: 8px 14px; border-radius: 8px; font-size: 13px; animation: rise .25s ease-out; }
+
+/* ---------- ayuda ---------- */
+.pop { position: fixed; z-index: 9; padding: 16px 18px; display: none; flex-direction: column; gap: 12px; user-select: text; -webkit-user-select: text; }
+.pop.on { display: flex; }
+#help { right: 14px; top: 60px; width: min(470px, calc(100% - 28px)); max-height: calc(100% - 200px); overflow-y: auto; }
+.pop h3 { margin: 0; font: 600 11px/1 var(--f-display); letter-spacing: .22em; text-transform: uppercase; }
+.pop dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 12.5px; align-items: center; }
+.pop dt { white-space: nowrap; } .pop dd { margin: 0; color: var(--paper-dim); }
+.pop ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.pop ol q { color: var(--voice); }
+.pop p { margin: 0; font-size: 12px; color: var(--paper-dim); }
+
+/* ---------- portada ---------- */
+#title { position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+#title.off { display: none; }
+#title::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 38%, rgba(6, 9, 13, .12), rgba(6, 9, 13, .58)); pointer-events: none; }
+.tband { position: relative; background: #05070a; display: flex; align-items: center; padding: 0 clamp(16px, 3vw, 40px); transition: transform .7s cubic-bezier(.7, 0, .2, 1); }
+.tband.top { min-height: clamp(40px, 8vh, 72px); justify-content: space-between; font: 500 10.5px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--paper-dim); }
+.tband.bot { min-height: clamp(80px, 14vh, 124px); justify-content: center; gap: clamp(18px, 3.4vw, 48px); flex-wrap: wrap; }
+.tmain { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(10px, 2vh, 18px); padding: 0 20px; text-align: center; }
+#title h1 { margin: 0; font: 800 clamp(34px, 7vw, 104px)/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: #fff; text-shadow: 0 4px 0 #1f5fa8, 0 8px 30px rgba(0, 0, 0, .45); animation: titleIn 1.2s cubic-bezier(.16, 1, .3, 1) both; }
+#title h1 em { font-style: normal; color: var(--voice); text-shadow: 0 4px 0 #b06d00, 0 8px 30px rgba(0, 0, 0, .45); }
+@keyframes titleIn { from { transform: translateY(24px) scale(.92); opacity: 0; } }
+#title .tag { margin: 0; font: 500 clamp(14px, 1.5vw, 19px)/1.4 var(--f-ui); letter-spacing: .05em; text-shadow: 0 1px 14px rgba(0, 0, 0, .6); max-width: 46em; }
+#go { margin-top: 6px; padding: 14px 34px; border: 0; border-radius: 999px; background: var(--voice); color: var(--ink); font: 700 13px/1 var(--f-display); letter-spacing: .3em; text-transform: uppercase; box-shadow: 0 6px 0 #b48a00, 0 10px 24px rgba(0, 0, 0, .3); transition: transform .12s, box-shadow .12s; }
+#go:hover { transform: translateY(-1px); } #go:active { transform: translateY(4px); box-shadow: 0 2px 0 #b48a00; }
+.or { font-size: 11.5px; letter-spacing: .06em; color: rgba(255, 255, 255, .85); text-shadow: 0 1px 8px rgba(0, 0, 0, .7); }
+.tile { display: grid; grid-template-columns: auto auto; column-gap: 10px; align-items: center; text-align: left; }
+.tile .ico { grid-row: 1 / span 2; display: flex; gap: 3px; }
+.tile b { font-size: 12.5px; font-weight: 500; align-self: end; } .tile span { font-size: 11px; color: var(--paper-dim); align-self: start; }
+.cap { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 5px; border: 1px solid rgba(242, 244, 247, .35); font: 500 11px/1 var(--f-mono); color: var(--paper); }
+#loading { font: 400 11px/1 var(--f-mono); color: var(--paper-dim); letter-spacing: .1em; }
+#title.out { pointer-events: none; } #title.out::before, #title.out .tmain { opacity: 0; transition: opacity .45s; }
+#title.out .tband.top { transform: translateY(-101%); } #title.out .tband.bot { transform: translateY(101%); }
+
+/* ---------- final ---------- */
+#bars { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+#bars i { position: absolute; left: 0; right: 0; height: 11vh; background: #000; transform: scaleY(0); transition: transform .8s cubic-bezier(.6, 0, .2, 1); }
+#bars i:first-child { top: 0; transform-origin: 50% 0; } #bars i:last-child { bottom: 0; transform-origin: 50% 100%; }
+body.cine #bars i { transform: scaleY(1); }
+body.cine #bar, body.cine #log, body.cine #stats, body.cine #tip, body.cine .tools, body.cine #platoHud, body.cine #platoCode, body.cine #spell { opacity: 0; pointer-events: none; transition: opacity .6s; }
+#caption { position: fixed; left: 0; right: 0; bottom: 2.6vh; text-align: center; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 1s .6s; }
+body.cine #caption { opacity: 1; }
+#caption b { display: block; font: 800 clamp(20px, 2.6vw, 34px)/1.1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; }
+#caption span { font: 400 clamp(12px, 1.2vw, 15px)/1.6 var(--f-ui); letter-spacing: .08em; color: var(--paper-dim); }
+#win { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 6; text-align: center; pointer-events: none; opacity: 0; transition: opacity .5s; }
+#win.on { opacity: 1; }
+#win b { display: block; font: 800 clamp(36px, 6vw, 80px)/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: #fff; text-shadow: 0 4px 0 #1f5fa8, 0 8px 30px rgba(0, 0, 0, .4); animation: titleIn .9s cubic-bezier(.16, 1, .3, 1) both; }
+#win span { display: inline-block; margin-top: 12px; padding: 7px 14px; border-radius: 999px; font-size: 14px; }
+#flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 3; transition: opacity .5s; }
+#fatal { position: fixed; inset: 0; display: none; place-items: center; z-index: 20; background: #0a0d12; color: var(--paper); padding: 40px; text-align: center; font-size: 15px; }
+body.title #platoHud, body.title #platoCode { display: none; }
+
+/* ---------- idioma (portada) ---------- */
+.tright { display: flex; align-items: center; gap: 18px; }
+#langSel { display: inline-flex; align-items: center; gap: 2px; font: 500 10.5px/1 var(--f-mono); letter-spacing: .16em; }
+#langSel button { border: 0; background: none; padding: 4px 5px; color: var(--paper-dim); font: inherit; letter-spacing: inherit; border-radius: 4px; }
+#langSel button:hover { color: var(--paper); }
+#langSel button[aria-pressed="true"] { color: var(--paper); box-shadow: inset 0 -1px 0 var(--voice); }
+#langSel i { font-style: normal; color: rgba(242, 244, 247, .3); }
+
+/* ---------- «Hacerlo real»: botón, rodaje y comparación ---------- */
+#bReal svg { width: 15px; height: 15px; flex: none; }
+#bReal .rt { font-variant-numeric: tabular-nums; }
+#bReal.busy { border-color: rgba(255, 216, 77, .5); }
+#bReal.busy svg { animation: pulse 1.1s ease-in-out infinite; }
+#bReal.rec { border-color: var(--rec); }
+#bReal.rec svg { color: var(--rec); }
+#bReal.ready { background: var(--voice); color: var(--ink); border-color: var(--voice); }
+#recBadge { position: fixed; left: 50%; top: calc(11vh + 14px); transform: translateX(-50%); z-index: 8; display: none; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 999px; font: 500 12px/1 var(--f-mono); letter-spacing: .08em; pointer-events: none; }
+#recBadge i { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); animation: pulse 1s ease-in-out infinite; }
+#recBadge b { font-weight: 600; letter-spacing: .2em; }
+#recBadge small { color: var(--paper-dim); font: inherit; }
+body.shooting #recBadge { display: flex; }
+body.shooting #bars i { transform: scaleY(1); }
+body.shooting #bar, body.shooting #log, body.shooting #tip, body.shooting #stats, body.shooting .brand, body.shooting .tools, body.shooting #platoHud, body.shooting #platoCode, body.shooting #bubbles, body.shooting #toasts { opacity: 0; pointer-events: none; transition: opacity .4s; }
+#realCmp { position: fixed; inset: 0; z-index: 12; display: none; place-items: center; padding: clamp(16px, 3vw, 40px); background: rgba(5, 7, 10, .84); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#realCmp.on { display: grid; animation: cmpIn .35s cubic-bezier(.16, 1, .3, 1); }
+#realCmp:focus { outline: none; }
+@keyframes cmpIn { from { opacity: 0; transform: scale(.985); } }
+#realCmp .box { width: min(1500px, 100%); display: flex; flex-direction: column; gap: 14px; }
+#realCmp header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+#realCmp header b { font: 800 clamp(20px, 2.2vw, 30px)/1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; }
+#realCmp header span { font: 400 12px/1.4 var(--f-mono); color: var(--paper-dim); }
+#realCmp .chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font: 400 11px/1 var(--f-mono); color: var(--paper-dim); }
+#realCmp .chip { padding: 3px 8px; border-radius: 99px; font: 500 11px/1.3 var(--f-mono); color: var(--ink); background: #ffc98a; }
+#realCmp .chip.f { background: #8cc4ff; }
+#realCmp .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#realCmp figure { margin: 0; position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+#realCmp video { display: block; width: 100%; height: 100%; object-fit: cover; }
+#realCmp figcaption { position: absolute; left: 10px; top: 10px; padding: 6px 10px; border-radius: 6px; background: rgba(5, 7, 10, .7); font: 500 11px/1.2 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; }
+#realCmp figcaption small { display: block; margin-top: 3px; color: var(--paper-dim); letter-spacing: .04em; text-transform: none; }
+#realCmp .wipe { display: none; position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; max-height: 72vh; margin: 0 auto; width: 100%; cursor: ew-resize; }
+#realCmp .wipe video { position: absolute; inset: 0; }
+#realCmp .wipe .top { clip-path: inset(0 0 0 var(--cut, 50%)); }
+#realCmp .wipe .line { position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 2px; margin-left: -1px; background: var(--voice); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); pointer-events: none; }
+#realCmp .wipe figcaption.r { left: auto; right: 10px; }
+#realCmp.wiping .panes { display: none; } #realCmp.wiping .wipe { display: block; }
+#realCmp footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#realCmp footer .sp { flex: 1; }
+#realCmp footer button, #realCmp footer a { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--paper); font: 500 12.5px/1 var(--f-ui); text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
+#realCmp footer button:hover, #realCmp footer a:hover { border-color: rgba(242, 244, 247, .4); }
+#realCmp footer .main { background: var(--voice); color: var(--ink); border-color: var(--voice); }
+#realCmp footer .main kbd { color: rgba(10, 13, 18, .62); border-color: rgba(10, 13, 18, .28); background: none; }
+#realCmp footer [aria-pressed="true"] { background: var(--paper); color: var(--ink); }
+@media (max-width: 900px) { #realCmp .panes { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { #log, .hint, #section { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body class="title">
+<canvas id="stage" aria-label="Nivel de plataformas en 3D" data-en-aria="3D platform level" tabindex="0"></canvas>
+<div id="bars"><i></i><i></i></div>
+<div id="flash"></div>
+
+<header id="top">
+  <div class="brand glass"><span class="seal" aria-hidden="true">P</span><b data-en="3D Platformer">Plataformas 3D</b><small>Plató</small></div>
+  <div id="stats" class="glass"><div id="hearts" aria-label="Vidas" data-en-aria="Lives"></div><div id="gems" aria-label="Gemas" data-en-aria="Gems"><i></i><span>0</span></div><div id="section"></div></div>
+  <nav class="tools" aria-label="Herramientas" data-en-aria="Tools">
+    <button class="tbtn glass" id="bReal" type="button" title="Rueda lo que tienes delante y conviértelo en vídeo con MAI-Image-2.7 y MiniMax H3 Max (fal en Foundry)" data-en-title="Film what is in front of you and turn it into video with MAI-Image-2.7 and MiniMax H3 Max (fal in Foundry)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="m3 10 1.2-4.6a1 1 0 0 1 1.2-.7l14.5 3.6-.6 1.7"/><path d="m8 5.7 2.6 4.3M13.2 7l2.6 4"/></svg><span class="rl" data-en="Make it real">Hacerlo real</span><span class="rt"></span></button>
+    <button class="tbtn glass" id="bSound" type="button" aria-pressed="true" data-en-html="Sound &lt;kbd&gt;M&lt;/kbd&gt;">Sonido <kbd>M</kbd></button>
+    <button class="tbtn glass" id="bHud" type="button" aria-pressed="true">Router <kbd>I</kbd></button>
+    <button class="tbtn glass" id="bHelp" type="button" aria-pressed="false" data-en-html="Help &lt;kbd&gt;H&lt;/kbd&gt;">Ayuda <kbd>H</kbd></button>
+  </nav>
+</header>
+
+<div id="bubbles" aria-hidden="true"></div>
+<div id="tip" class="glass" role="status"></div>
+<div id="toasts" aria-live="polite"></div>
+<section id="log" aria-live="polite" aria-label="Órdenes" data-en-aria="Orders"></section>
+<div id="spell"><p id="spellText"></p><p id="reply"></p></div>
+<div id="recBadge" class="glass" role="status"><i></i><b>REC</b><span class="rt">00:00</span><small data-en="3D canvas only · 1280×720 · 30 fps">solo el lienzo 3D · 1280×720 · 30 fps</small></div>
+
+<footer id="bar">
+  <div id="chips" aria-label="Prueba a decir" data-en-aria="Try saying"></div>
+  <div id="say" class="glass">
+    <button id="mic" type="button" aria-label="Mantén pulsado para hablar" title="Mantén T para hablar" data-en-aria="Hold to talk" data-en-title="Hold T to talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="Mantén T para hablar, o escribe una orden y pulsa Enter" aria-label="Orden" data-en-ph="Hold T to talk, or type an order and press Enter" data-en-aria="Order">
+    <button id="live" type="button" aria-pressed="false" title="Escucha continua: cada frase se ejecuta al terminarla" data-en-title="Continuous listening: each sentence runs when you finish it" data-en-html="&lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;Listen &lt;kbd&gt;V&lt;/kbd&gt;"><span class="dot"></span>Escucha <kbd>V</kbd></button>
+  </div>
+  <div class="hint" data-en-html="&lt;span&gt;&lt;kbd&gt;W A S D&lt;/kbd&gt; move&lt;/span&gt;&lt;span&gt;&lt;kbd&gt;Space&lt;/kbd&gt; jump&lt;/span&gt;&lt;span&gt;&lt;kbd&gt;Shift&lt;/kbd&gt; run&lt;/span&gt;&lt;span&gt;&lt;kbd&gt;T&lt;/kbd&gt; hold to talk&lt;/span&gt;&lt;span&gt;&lt;kbd&gt;Enter&lt;/kbd&gt; type&lt;/span&gt;&lt;span&gt;drag to move the camera&lt;/span&gt;"><span><kbd>W A S D</kbd> moverse</span><span><kbd>Espacio</kbd> saltar</span><span><kbd>Mayús</kbd> correr</span><span><kbd>T</kbd> mantener para hablar</span><span><kbd>Enter</kbd> escribir</span><span>arrastra para mover la cámara</span></div>
+</footer>
+
+<div id="help" class="pop glass" role="dialog" aria-label="Ayuda" data-en-aria="Help">
+  <h3 data-en="How to play">Cómo se juega</h3>
+  <p data-en-html="&lt;span data-hero&gt;Rubio&lt;/span&gt; can’t get through on his own: every obstacle is beaten with an order. Talk (hold &lt;kbd&gt;T&lt;/kbd&gt;, or &lt;kbd&gt;V&lt;/kbd&gt; for continuous listening) or type (&lt;kbd&gt;Enter&lt;/kbd&gt;). Microsoft-Decision-1.1 picks the model and GPT-6 Luna turns your sentence into changes to the level; whatever doesn’t exist yet, MAI-Code-2-Flash writes live."><span data-hero>Rubio</span> no puede pasar solo: cada obstáculo se supera con una orden. Habla (mantén <kbd>T</kbd>, o <kbd>V</kbd> para escucha continua) o escribe (<kbd>Enter</kbd>). Microsoft-Decision-1.1 elige el modelo y GPT-6 Luna convierte tu frase en cambios en el nivel; lo que no existe, lo escribe MAI-Code-2-Flash en directo.</p>
+  <dl data-en-html="&lt;dt&gt;&lt;kbd&gt;W A S D&lt;/kbd&gt; / arrows&lt;/dt&gt;&lt;dd&gt;Move (relative to the camera)&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;Space&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Jump (higher if you hold it)&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;Shift&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Run&lt;/dd&gt;&lt;dt&gt;Drag the mouse&lt;/dt&gt;&lt;dd&gt;Turn the camera · wheel: zoom in or out&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;T&lt;/kbd&gt; (hold)&lt;/dt&gt;&lt;dd&gt;Push to talk&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;V&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Continuous listening&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;Enter&lt;/kbd&gt; or &lt;kbd&gt;/&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Type an order&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;I&lt;/kbd&gt; · &lt;kbd&gt;M&lt;/kbd&gt; · &lt;kbd&gt;H&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Router panel · sound · this help&lt;/dd&gt;&lt;dt&gt;&lt;kbd&gt;R&lt;/kbd&gt; · &lt;kbd&gt;Esc&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;Back to the last checkpoint · close&lt;/dd&gt;">
+    <dt><kbd>W A S D</kbd> / flechas</dt><dd>Moverse (relativo a la cámara)</dd>
+    <dt><kbd>Espacio</kbd></dt><dd>Saltar (más alto si lo mantienes)</dd>
+    <dt><kbd>Mayús</kbd></dt><dd>Correr</dd>
+    <dt>Arrastrar el ratón</dt><dd>Girar la cámara · rueda: acercar o alejar</dd>
+    <dt><kbd>T</kbd> (mantener)</dt><dd>Pulsar para hablar</dd>
+    <dt><kbd>V</kbd></dt><dd>Escucha continua</dd>
+    <dt><kbd>Enter</kbd> o <kbd>/</kbd></dt><dd>Escribir una orden</dd>
+    <dt><kbd>I</kbd> · <kbd>M</kbd> · <kbd>H</kbd></dt><dd>Panel del router · sonido · esta ayuda</dd>
+    <dt><kbd>R</kbd> · <kbd>Esc</kbd></dt><dd>Volver al último punto de control · cerrar</dd>
+  </dl>
+  <h3 data-en="Demo script">Guion de la demo</h3>
+  <ol id="script"></ol>
+  <p data-en="Also: “make it rain” (puts out the fires), “make the sun come out”, “make it snow”, “make it night”, “sunset”. And anything new: “put a gummy dragon”.">También: «que llueva» (apaga los incendios), «que salga el sol», «que nieve», «que se haga de noche», «atardecer». Y cualquier cosa nueva: «pon un dragón de gominola».</p>
+</div>
+
+<div id="title">
+  <div class="tband top"><span>Plató · Microsoft Foundry + GitHub Copilot</span><span class="tright"><span id="loading" data-en="Loading the level…">Cargando el nivel…</span><span id="langSel" role="group" aria-label="Idioma" data-en-aria="Language"><button type="button" data-lang="en" aria-pressed="false" title="English" lang="en">EN</button><i aria-hidden="true">·</i><button type="button" data-lang="es" aria-pressed="false" title="Español" lang="es">ES</button></span></span></div>
+  <div class="tmain">
+    <h1 data-en-html="&lt;em&gt;3D&lt;/em&gt; Platformer">Plataformas <em>3D</em></h1>
+    <p class="tag" data-en-html="&lt;span data-hero&gt;Rubio&lt;/span&gt; has to reach the goal with Princess Lúa. There’s just one problem: the path can’t be beaten… unless you change it by talking."><span data-hero>Rubio</span> tiene que llegar a la meta con la princesa Lúa. Solo hay un problema: el camino no se puede superar… salvo que lo cambies hablando.</p>
+    <button id="go" type="button" data-en="Start">Empezar</button>
+    <span class="or" data-en-html="or press &lt;kbd&gt;Enter&lt;/kbd&gt;">o pulsa <kbd>Enter</kbd></span>
+  </div>
+  <div class="tband bot">
+    <div class="tile"><div class="ico"><span class="cap">W</span><span class="cap">A</span><span class="cap">S</span><span class="cap">D</span></div><b data-en="Move">Moverse</b><span data-en="Space jumps, Shift runs">Espacio salta, Mayús corre</span></div>
+    <div class="tile"><div class="ico"><span class="cap">T</span></div><b data-en="Hold to talk">Mantén para hablar</b><span data-en="“put a ladder”">«pon una escalera»</span></div>
+    <div class="tile"><div class="ico"><span class="cap">Enter</span></div><b data-en="Type an order">Escribe una orden</b><span data-en="“remove this enemy”">«elimina a este enemigo»</span></div>
+    <div class="tile"><div class="ico"><span class="cap">H</span></div><b data-en="Help and script">Ayuda y guion</b><span data-en="every order in the demo">todas las órdenes de la demo</span></div>
+  </div>
+</div>
+
+<div id="win"><b data-en="Level complete!">¡Nivel superado!</b><span class="glass" id="winText"></span></div>
+<div id="caption"><b data-en="3D Platformer">Plataformas 3D</b><span data-en="Built by talking · Microsoft Foundry · GitHub Copilot">Creado hablando · Microsoft Foundry · GitHub Copilot</span></div>
+<div id="realCmp" role="dialog" aria-modal="true" aria-label="Hacerlo real" data-en-aria="Make it real"></div>
+<div id="fatal"></div>
+<script>PLATO_I18N(document);</script>
+
+<script src="js/plato.js"></script>
+<script src="platform/vendor/three.min.js"></script>
+<script src="platform/vendor/GLTFLoader.js"></script>
+<script src="platform/vendor/SkeletonUtils.js"></script>
+<script src="platform/vendor/SVGLoader.js"></script>
+<script src="platform/pf-core.js"></script>
+<script src="platform/pf-models.js"></script>
+<script src="platform/pf-world.js"></script>
+<script src="platform/pf-actors.js"></script>
+<script src="platform/pf-boss.js"></script>
+<script src="platform/pf-allies.js"></script>
+<script src="platform/pf-finale.js"></script>
+<script src="platform/pf-orders.js"></script>
+<script src="platform/pf-real.js"></script>
+<script src="platform/pf-ui.js"></script>
+<script src="platform/pf-main.js"></script>
+</body>
+</html>

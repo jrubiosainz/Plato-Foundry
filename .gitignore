@@ -1,0 +1,10 @@
+node_modules
+site/dist/
+config/local.json
+.env
+.env.*
+out/
+tests/out/
+*.log
+.DS_Store
+.impeccable/

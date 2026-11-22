@@ -1,0 +1,50 @@
+Plató · Plataformas 3D
+Copyright 2026 jrubiosainz
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Este repositorio contiene solo el juego «Plataformas 3D» de Plató. Parte de Spoken World (commit 2c398a5 de
+https://github.com/ryannli/spoken-world): site/build.mjs y package.json derivan de los suyos, con cambios (construyen el
+juego y copian Three.js r128 desde node_modules), y las fuentes Jost y DM Mono de app/platform/fonts/ son las que Spoken
+World incrustaba en su app/index.html. Todo lo demás es nuevo. Los personajes, el nivel y los efectos de sonido
+(sintetizados con WebAudio) no toman nombres, diseños ni sonidos de ningún otro juego.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Spoken World
+Copyright 2026 ryannli (https://github.com/ryannli)
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+------------------------------------------------------------------------------------------------------------------------
+
+Obras de terceros
+
+- Three.js r128 (https://threejs.org), MIT License, Copyright 2010-2021 Three.js Authors: build/three.min.js y
+  examples/js/loaders/GLTFLoader.js, SVGLoader.js y examples/js/utils/SkeletonUtils.js se copian desde node_modules a
+  site/dist/platform/vendor al construir (no están en el repositorio).
+
+- Jost typeface (app/platform/fonts/Jost-100-900.woff2). Copyright 2020 The Jost Project Authors
+  (https://github.com/indestructible-type/Jost). SIL Open Font License 1.1: licenses/Jost-OFL.txt
+
+- DM Mono typeface (app/platform/fonts/DMMono-400-500.woff2). Copyright 2020 The DM Mono Project Authors
+  (https://www.github.com/googlefonts/dm-mono). SIL Open Font License 1.1: licenses/DM-Mono-OFL.txt
+
+- Modelos 3D del reparto inicial (app/assets/platform/models/hero.glb, boss.glb, princess.glb y enemy.glb): diseños
+  originales generados con Magnific por la cuenta Premium del titular del proyecto (boceto con MAI-Image-2.7, imagen a
+  3D con Tripo P1, esqueleto y animaciones de la biblioteca de Meshy). Uso comercial según los términos de Magnific y
+  de sus proveedores. El resto de modelos del juego se generan con código del proyecto.
+
+- docs/plato-hazlo-real.jpg (imagen del README): a la izquierda, una captura del juego; a la derecha, el mismo plano
+  generado por «Hacerlo real» (MAI-Image-2.7 y MiniMax H3 Max, de fal en Microsoft Foundry).
+
+Marcas e iconos (app/assets/platform/logos/, sin modificar; el juego los extruye en 3D sin cambiar su forma ni color):
+- microsoft.svg: logotipo de Microsoft, de las directrices de marca «Sign in with Microsoft» de Microsoft Learn.
+- foundry.svg: icono de Microsoft Foundry de Azure Public Service Icons V25
+  (Icons/ai + machine learning/035746832-icon-service-AI-Foundry.svg). Microsoft permite usar estos iconos en
+  diagramas de arquitectura, material de formación y documentación (https://learn.microsoft.com/azure/architecture/icons/).
+- copilot.svg y github.svg: Octicons de GitHub (@primer/octicons 19.42.0, copilot-48 y mark-github-24), MIT License,
+  Copyright GitHub Inc.: licenses/Octicons-MIT.txt.
+Microsoft, Microsoft Foundry, Azure, GitHub y GitHub Copilot, y sus logotipos, son marcas de Microsoft Corporation y
+de GitHub, Inc. Aparecen solo para identificar los productos con los que está hecho el juego; su uso debe seguir las
+directrices de marca de Microsoft y de GitHub. No implica patrocinio ni aprobación.
